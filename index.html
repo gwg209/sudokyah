@@ -126,7 +126,7 @@
 </head>
 <body>
 
-<div class="header">SUDOKYAH v15.8</div>
+<div class="header">SUDOKYAH v15.10</div>
 <div id="grid" class="sudoku-grid"></div>
 
 <div class="controls">
@@ -158,6 +158,10 @@
     let currentBoard = Array.from({ length: 9 }, () => Array(9).fill(0));
     let hintMask = Array.from({ length: 9 }, () => Array(9).fill(false));
     let lastFocused = null;
+
+    let notesBoard = Array.from({ length: 9 }, () =>
+      Array.from({ length: 9 }, () => Array(9).fill(false))
+    );
 
     const gridEl = document.getElementById('grid');
 
@@ -384,49 +388,57 @@
         clearNotes();
     }
 
-function toggleNotes() {
-    const section = document.getElementById('notesSection');
-    section.style.display = 'block';
-    const notesGrid = document.getElementById('notesGrid');
-    notesGrid.innerHTML = '';
+    function toggleNotes() {
+        const section = document.getElementById('notesSection');
+        section.style.display = 'block';
+        const notesGrid = document.getElementById('notesGrid');
+        notesGrid.innerHTML = '';
 
-    // Walk through the 9x9 Sudoku cells
-    for (let r = 0; r < 9; r++) {
-        for (let subR = 0; subR < 3; subR++) {
-            for (let c = 0; c < 9; c++) {
-                for (let subC = 0; subC < 3; subC++) {
-                    const noteVal = (subR * 3) + subC + 1;
-                    const div = document.createElement('div');
-                    div.className = 'note-cell';
-                    
-                    // 1. Add Pencil Mark if valid
-                    if (currentBoard[r][c] === 0 && isValidPlacement(currentBoard, r, c, noteVal)) {
-                        div.innerText = noteVal;
+        for (let r = 0; r < 9; r++) {
+            for (let subR = 0; subR < 3; subR++) {
+                for (let c = 0; c < 9; c++) {
+                    for (let subC = 0; subC < 3; subC++) {
+
+                        const noteVal = (subR * 3) + subC + 1;
+                        const div = document.createElement('div');
+                        div.className = 'note-cell';
+
+                        // Show note only if it's toggled ON
+                        if (notesBoard[r][c][noteVal - 1]) {
+                            div.innerText = noteVal;
+                        }
+    
+                        // Toggle on click
+                        div.onclick = () => {
+
+                            // Don't allow notes in filled cells
+                            if (currentBoard[r][c] !== 0) return;
+
+                            notesBoard[r][c][noteVal - 1] =
+                                !notesBoard[r][c][noteVal - 1];
+
+                            div.innerText =
+                                notesBoard[r][c][noteVal - 1] ? noteVal : '';
+                        };
+
+                        if (subC === 2) {
+                            div.style.borderRight = "1px solid #444";
+                            if ((c + 1) % 3 === 0)
+                                div.style.borderRight = "var(--border-thick)";
+                        }
+                        if (subR === 2) {
+                            div.style.borderBottom = "1px solid #444";
+                            if ((r + 1) % 3 === 0)
+                                div.style.borderBottom = "var(--border-thick)";
+                        }
+                        notesGrid.appendChild(div);
                     }
-
-                    // 2. Vertical Border Logic
-                    if (subC === 2) {
-                        // Every 3rd note column (End of a Sudoku Cell)
-                        div.style.borderRight = "1px solid #444"; 
-                        // Every 9th note column (End of a 3x3 Region)
-                        if ((c + 1) % 3 === 0) div.style.borderRight = "var(--border-thick)";
-                    }
-
-                    // 3. Horizontal Border Logic
-                    if (subR === 2) {
-                        // Every 3rd note row (End of a Sudoku Cell)
-                        div.style.borderBottom = "1px solid #444";
-                        // Every 9th note row (End of a 3x3 Region)
-                        if ((r + 1) % 3 === 0) div.style.borderBottom = "var(--border-thick)";
-                    }
-
-                    notesGrid.appendChild(div);
                 }
             }
         }
+        toast("Notes mode active. Tap numbers to toggle.");
     }
-    toast("Pencil marks generated.");
-}
+
     initUI();
 </script>
 
