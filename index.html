@@ -72,23 +72,50 @@
         .controls {
             margin-top: 20px;
             display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px; /* Spacing between the rows */
+        }
+
+        .btn-row {
+            display: flex;
             flex-wrap: wrap;
-            gap: 7px;
+            gap: 8px;
             justify-content: center;
-            max-width: 400px;
         }
 
         button {
-            padding: 8px 10px;
+            padding: 10px 14px;
             cursor: pointer;
-            border: 1px solid #444;
-            background: white;
-            font-size: 13px;
-            border-radius: 3px;
+            font-size: 0.9rem;
+            border-radius: 5px;
+            transition: background 0.2s, color 0.2s;
+            font-weight: 500;
         }
 
-        button:hover { background: #ddd; }
-        .btn-danger { color: #cc0000; border-color: #cc0000; }
+        /* Row 1: Generation (Green) */
+        .btn-gen {
+            border: 1px solid #2d7d46;
+            color: #2d7d46;
+            background: #e9f5ec;
+        }
+        .btn-gen:hover { background: #2d7d46; color: white; }
+
+        /* Row 2: Logic (Blue) */
+        .btn-logic {
+            border: 1px solid #1155cc;
+            color: #1155cc;
+            background: #eef4ff;
+        }
+        .btn-logic:hover { background: #1155cc; color: white; }
+
+        /* Row 3: Cleanup (Red) */
+        .btn-danger {
+            border: 1px solid #cc0000;
+            color: #cc0000;
+            background: #fff5f5;
+        }
+        .btn-danger:hover { background: #cc0000; color: white; }
 
         #toast {
             position: fixed;
@@ -126,25 +153,31 @@
 </head>
 <body>
 
-<div class="header">SUDOKYAH v15.20</div>
+<div class="header">SUDOKYAH v15.21</div>
 <div id="grid" class="sudoku-grid"></div>
 
 <div class="controls">
-    <button onclick="createSudokuByDifficulty(45, 'Beginner')">Beginner</button>
-    <button onclick="createSudokuByDifficulty(36, 'Medium')">Medium</button>
-    <button onclick="createSudokuByDifficulty(27, 'Advanced')">Advanced</button>
-    <button onclick="createSudokuByDifficulty(22, 'Expert')">Expert</button>
-    <button onclick="createSudokuByDifficulty(19, 'Kyah')">Kyah</button> 
+    <div class="btn-row">
+        <button class="btn-gen" onclick="createSudokuByDifficulty(45, 'Beginner')">Beginner</button>
+        <button class="btn-gen" onclick="createSudokuByDifficulty(36, 'Medium')">Medium</button>
+        <button class="btn-gen" onclick="createSudokuByDifficulty(27, 'Advanced')">Advanced</button>
+        <button class="btn-gen" onclick="createSudokuByDifficulty(22, 'Expert')">Expert</button>
+        <button class="btn-gen" onclick="createSudokuByDifficulty(19, 'Kyah Level')">Kyah Level</button> 
+    </div>
 
-    <button onclick="giveHint()">Hint</button>
-    <button onclick="analyzeBoardSolutions()">Check</button>
-    <button onclick="scoreSudokuPuzzle()">Score</button>
-    <button onclick="solveSudoku()">Solve</button>
-    <button onclick="toggleNotes()">Notes</button>
+    <div class="btn-row">
+        <button class="btn-logic" onclick="giveHint()">Hint</button>
+        <button class="btn-logic" onclick="analyzeBoardSolutions()">Check</button>
+        <button class="btn-logic" onclick="scoreSudokuPuzzle()">Score</button>
+        <button class="btn-logic" onclick="solveSudoku()">Solve</button>
+        <button class="btn-logic" onclick="toggleNotes()">Notes</button>
+    </div>
 
-    <button class="btn-danger" onclick="clearAnswers()">Clear Answers</button>
-    <button class="btn-danger" onclick="clearNotes()">Clear Notes</button>
-    <button class="btn-danger" onclick="resetFullBoard()">Reset Grid</button>
+    <div class="btn-row">
+        <button class="btn-danger" onclick="clearAnswers()">Clear Answers</button>
+        <button class="btn-danger" onclick="clearNotes()">Clear Notes</button>
+        <button class="btn-danger" onclick="resetFullBoard()">Reset Grid</button>
+    </div>
 </div>
 
 <div id="notesSection" class="notes-container">
