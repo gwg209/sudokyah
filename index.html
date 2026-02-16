@@ -26,7 +26,6 @@
             padding: 20px;
         }
 
-        /* Updated Header for Menu Support */
         .header {
             background: var(--header-bg);
             color: white;
@@ -42,7 +41,7 @@
             align-items: center;
         }
 
-        /* Pulldown Menu Styles */
+        /* Clickable Menu Styles */
         .menu-container {
             position: absolute;
             right: 10px;
@@ -51,28 +50,31 @@
             font-size: 1.5rem;
             cursor: pointer;
             z-index: 2000;
+            padding: 5px 10px; /* Larger tap target */
         }
 
         .menu-content {
-            display: none;
+            display: none; /* Controlled by JS toggle */
             position: absolute;
             right: 0;
             top: 100%;
             background-color: white;
-            min-width: 160px;
-            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            min-width: 180px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.3);
             border-radius: 4px;
             overflow: hidden;
             text-align: left;
+            margin-top: 5px;
         }
 
-        .menu-container:hover .menu-content {
+        /* Show class for JS toggle */
+        .menu-content.show {
             display: block;
         }
 
         .menu-content .menu-item {
             color: #333;
-            padding: 10px 16px;
+            padding: 12px 16px;
             text-decoration: none;
             display: block;
             font-size: 14px;
@@ -80,20 +82,19 @@
             border-bottom: 1px solid #eee;
         }
 
-        .menu-content .menu-item:hover {
-            background-color: #f1f1f1;
+        .menu-content .menu-item:active {
+            background-color: #ddd;
         }
 
         .menu-group-label {
             background: #eee;
-            padding: 5px 16px;
+            padding: 6px 16px;
             font-size: 11px;
             color: #666;
             text-transform: uppercase;
             letter-spacing: 1px;
         }
 
-        /* Rest of the original styles */
         .sudoku-grid {
             display: grid;
             grid-template-columns: repeat(9, var(--cell-size));
@@ -110,6 +111,8 @@
             text-align: center;
             font-size: 1.2rem;
             outline: none;
+            -webkit-appearance: none; /* Mobile fix */
+            border-radius: 0;
         }
 
         .cell:nth-child(3n) { border-right: var(--border-thick); }
@@ -160,10 +163,10 @@
 <body>
 
 <div class="header">
-    SUDOKYAH v15.34
-    <div class="menu-container">
+    SUDOKYAH v15.35
+    <div class="menu-container" id="menuBtn">
         ☰
-        <div class="menu-content">
+        <div class="menu-content" id="menuContent">
             <div class="menu-group-label">New Game</div>
             <div class="menu-item" onclick="createSudokuByDifficulty(45, 'Beginner')">Beginner</div>
             <div class="menu-item" onclick="createSudokuByDifficulty(35, 'Medium')">Medium</div>
@@ -174,13 +177,13 @@
             <div class="menu-item" onclick="toggleNotes()">Show Notes</div>
             <div class="menu-item" onclick="giveHint()">Hint</div>
             <div class="menu-item" onclick="analyzeBoardSolutions()">Check Logic</div>
-            <div class="menu-item" onclick="solveSudoku()">Solve Puzzle</div>
+            <div class="menu-item" onclick="solveSudoku()">Solve All</div>
             <div class="menu-item" onclick="scoreSudokuPuzzle()">Score Puzzle</div>
             
             <div class="menu-group-label">Clear</div>
-            <div class="menu-item" onclick="clearAnswers()" style="color: #cc0000;">Clear Answers</div>
-            <div class="menu-item" onclick="clearNotes()" style="color: #cc0000;">Clear Notes</div>
-            <div class="menu-item" onclick="resetFullBoard()" style="color: #cc0000;">Reset Grid</div>
+            <div class="menu-item" onclick="clearAnswers()" style="color: #cc0000;">Answers</div>
+            <div class="menu-item" onclick="clearNotes()" style="color: #cc0000;">Notes</div>
+            <div class="menu-item" onclick="resetFullBoard()" style="color: #cc0000;">Board</div>
         </div>
     </div>
 </div>
@@ -204,6 +207,21 @@
     );
 
     const gridEl = document.getElementById('grid');
+    const menuBtn = document.getElementById('menuBtn');
+    const menuContent = document.getElementById('menuContent');
+
+    // Toggle Menu on Click
+    menuBtn.addEventListener('click', (e) => {
+        e.stopPropagation(); // Prevents immediate closing by the window listener
+        menuContent.classList.toggle('show');
+    });
+
+    // Close Menu when clicking anywhere else
+    window.addEventListener('click', () => {
+        if (menuContent.classList.contains('show')) {
+            menuContent.classList.remove('show');
+        }
+    });
 
     function initUI() {
         gridEl.innerHTML = '';
@@ -211,6 +229,7 @@
             for (let c = 0; c < 9; c++) {
                 const input = document.createElement('input');
                 input.type = 'text';
+                input.inputMode = 'numeric'; // Forces numeric keypad on mobile
                 input.maxLength = 1;
                 input.className = 'cell';
                 input.dataset.row = r;
@@ -399,109 +418,4 @@
             input.classList.remove('hint-cell', 'user-val', 'error', 'correct', 'empty-highlight', 'hint-provided');
             if (isNewPuzzle && val !== 0) hintMask[r][c] = true;
             if (hintMask[r][c]) input.classList.add('hint-cell');
-            else if (val !== 0) input.classList.add('user-val');
-        });
-    }
-
-    function clearAnswers() {
-        for (let r = 0; r < 9; r++) {
-            for (let c = 0; c < 9; c++) {
-                if (!hintMask[r][c]) currentBoard[r][c] = 0;
-            }
-        }
-        updateUI();
-        toast("Answers cleared.");
-    }
-
-    function clearNotes() {
-        notesBoard = Array.from({ length: 9 }, () =>
-            Array.from({ length: 9 }, () => Array(9).fill(false))
-        );
-        document.getElementById('notesGrid').innerHTML = '';
-        document.getElementById('notesSection').style.display = 'none';
-    }
-
-    function resetFullBoard() {
-        currentBoard = Array.from({ length: 9 }, () => Array(9).fill(0));
-        hintMask = Array.from({ length: 9 }, () => Array(9).fill(false));
-        lastFocused = null;
-        updateUI();
-        clearNotes();
-    }
-
-    function toggleNotes() {
-        const section = document.getElementById('notesSection');
-        section.style.display = 'block';
-        initializeAllNotes();
-        renderNotesGrid();
-        toast("Smart pencil marks generated.");
-    }
-
-    function initializeAllNotes() {
-        notesBoard = Array.from({ length: 9 }, () =>
-            Array.from({ length: 9 }, () => Array(9).fill(false))
-        );
-        for (let r = 0; r < 9; r++) {
-            for (let c = 0; c < 9; c++) {
-                if (currentBoard[r][c] === 0) {
-                    for (let n = 1; n <= 9; n++) {
-                        if (isValidPlacement(currentBoard, r, c, n)) {
-                            notesBoard[r][c][n - 1] = true;
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    function renderNotesGrid() {
-        const notesGrid = document.getElementById('notesGrid');
-        notesGrid.innerHTML = '';
-        for (let r = 0; r < 9; r++) {
-            for (let subR = 0; subR < 3; subR++) {
-                for (let c = 0; c < 9; c++) {
-                    for (let subC = 0; subC < 3; subC++) {
-                        const noteVal = (subR * 3) + subC + 1;
-                        const div = document.createElement('div');
-                        div.className = 'note-cell';
-                        if (notesBoard[r][c][noteVal - 1]) div.innerText = noteVal;
-                        div.onclick = () => {
-                            if (currentBoard[r][c] !== 0) return;
-                            notesBoard[r][c][noteVal - 1] = !notesBoard[r][c][noteVal - 1];
-                            div.innerText = notesBoard[r][c][noteVal - 1] ? noteVal : '';
-                        };
-                        if (subC === 2) {
-                            div.style.borderRight = "1px solid #444";
-                            if ((c + 1) % 3 === 0) div.style.borderRight = "var(--border-thick)";
-                        }
-                        if (subR === 2) {
-                            div.style.borderBottom = "1px solid #444";
-                            if ((r + 1) % 3 === 0) div.style.borderBottom = "var(--border-thick)";
-                        }
-                        notesGrid.appendChild(div);
-                    }
-                }
-            }
-        }
-    }
-
-    function updateNotesAfterPlacement(r, c, val) {
-        if (!val) return;
-        notesBoard[r][c] = Array(9).fill(false);
-        for (let col = 0; col < 9; col++) notesBoard[r][col][val - 1] = false;
-        for (let row = 0; row < 9; row++) notesBoard[row][c][val - 1] = false;
-        const startRow = Math.floor(r / 3) * 3;
-        const startCol = Math.floor(c / 3) * 3;
-        for (let row = startRow; row < startRow + 3; row++) {
-            for (let col = startCol; col < startCol + 3; col++) {
-                notesBoard[row][col][val - 1] = false;
-            }
-        }
-        if (document.getElementById('notesSection').style.display === 'block') renderNotesGrid();
-    }
-
-    initUI();
-</script>
-
-</body>
-</html>
+            else
