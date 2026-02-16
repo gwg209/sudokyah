@@ -26,6 +26,7 @@
             padding: 20px;
         }
 
+        /* Updated Header for Menu Support */
         .header {
             background: var(--header-bg);
             color: white;
@@ -35,8 +36,64 @@
             font-weight: bold;
             font-size: 1.2rem;
             border-radius: 4px 4px 0 0;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
+        /* Pulldown Menu Styles */
+        .menu-container {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.5rem;
+            cursor: pointer;
+            z-index: 2000;
+        }
+
+        .menu-content {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 100%;
+            background-color: white;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            border-radius: 4px;
+            overflow: hidden;
+            text-align: left;
+        }
+
+        .menu-container:hover .menu-content {
+            display: block;
+        }
+
+        .menu-content .menu-item {
+            color: #333;
+            padding: 10px 16px;
+            text-decoration: none;
+            display: block;
+            font-size: 14px;
+            font-weight: normal;
+            border-bottom: 1px solid #eee;
+        }
+
+        .menu-content .menu-item:hover {
+            background-color: #f1f1f1;
+        }
+
+        .menu-group-label {
+            background: #eee;
+            padding: 5px 16px;
+            font-size: 11px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Rest of the original styles */
         .sudoku-grid {
             display: grid;
             grid-template-columns: repeat(9, var(--cell-size));
@@ -55,67 +112,17 @@
             outline: none;
         }
 
-        /* Thicker borders for 3x3 separation */
         .cell:nth-child(3n) { border-right: var(--border-thick); }
         .cell:nth-child(9n) { border-right: var(--border-thick); }
         .cell:nth-child(n+19):nth-child(-n+27),
         .cell:nth-child(n+46):nth-child(-n+54) { border-bottom: var(--border-thick); }
 
-        /* Logic Styles */
         .cell.hint-cell { font-weight: bold; color: black !important; background-color: #eee; }
         .cell.user-val { color: #1155cc; }
         .cell.error { background-color: #ff9999; }
         .cell.correct { background-color: #99ff99; }
         .cell.empty-highlight { background-color: #ffff99; }
         .cell.hint-provided { color: #1155cc; }
-
-        .controls {
-            margin-top: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 12px; /* Spacing between the rows */
-        }
-
-        .btn-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 7px;
-            justify-content: center;
-        }
-
-        button {
-            padding: 8px 10px;
-            cursor: pointer;
-            font-size: 13px;
-            border-radius: 5px;
-            transition: background 0.2s, color 0.2s;
-            font-weight: 500;
-        }
-
-        /* Row 1: Generation (Green) */
-        .btn-gen {  
-            border: 1px solid #2d7d46;
-            color: #2d7d46;
-            background: #e9f5ec;
-        }
-        .btn-gen:hover { background: #2d7d46; color: white; }
-
-        /* Row 2: Logic (Blue) */
-        .btn-logic {
-            border: 1px solid #1155cc;
-            color: #1155cc;
-            background: #eef4ff;
-        }
-        .btn-logic:hover { background: #1155cc; color: white; }
-
-        /* Row 3: Cleanup (Red) */
-        .btn-danger {
-            border: 1px solid #cc0000;
-            color: #cc0000;
-            background: #fff5f5;
-        }
-        .btn-danger:hover { background: #cc0000; color: white; }
 
         #toast {
             position: fixed;
@@ -128,7 +135,6 @@
             z-index: 1000;
         }
 
-        /* Notes Display */
         .notes-container { margin-top: 30px; display: none; }
         .notes-header { background: var(--notes-bg); color: white; text-align: center; padding: 5px; font-weight: bold; }
         .notes-grid { 
@@ -137,7 +143,7 @@
             grid-template-rows: repeat(27, 15px); 
             border: var(--border-thick); 
             background: #fafafa; 
-            font-size: 9px; /* Slightly larger for readability */
+            font-size: 9px; 
             color: #444; 
             margin: 0 auto;
         }
@@ -153,31 +159,33 @@
 </head>
 <body>
 
-<div class="header">SUDOKYAH v15.32</div>
-<div id="grid" class="sudoku-grid"></div>
-
-<div class="controls">
-    <div class="btn-row">
-        <button class="btn-gen" onclick="createSudokuByDifficulty(45, 'Beginner')">Beginner</button>
-        <button class="btn-gen" onclick="createSudokuByDifficulty(35, 'Medium')">Medium</button>
-        <button class="btn-gen" onclick="createSudokuByDifficulty(25, 'Advanced')">Advanced</button>
-        <button class="btn-gen" onclick="createSudokuByDifficulty(19, 'Kyah')">Kyah</button> 
-    </div>
-
-    <div class="btn-row">
-        <button class="btn-logic" onclick="toggleNotes()">Notes</button>
-        <button class="btn-logic" onclick="giveHint()">Hint</button>
-        <button class="btn-logic" onclick="analyzeBoardSolutions()">Check</button>
-        <button class="btn-logic" onclick="solveSudoku()">Solve</button>
-        <button class="btn-logic" onclick="scoreSudokuPuzzle()">Score</button>
-    </div>
-
-    <div class="btn-row">
-        <button class="btn-danger" onclick="clearAnswers()">Clear Answers</button>
-        <button class="btn-danger" onclick="clearNotes()">Clear Notes</button>
-        <button class="btn-danger" onclick="resetFullBoard()">Reset Grid</button>
+<div class="header">
+    SUDOKYAH v15.34
+    <div class="menu-container">
+        ☰
+        <div class="menu-content">
+            <div class="menu-group-label">New Game</div>
+            <div class="menu-item" onclick="createSudokuByDifficulty(45, 'Beginner')">Beginner</div>
+            <div class="menu-item" onclick="createSudokuByDifficulty(35, 'Medium')">Medium</div>
+            <div class="menu-item" onclick="createSudokuByDifficulty(25, 'Advanced')">Advanced</div>
+            <div class="menu-item" onclick="createSudokuByDifficulty(19, 'Kyah')">Kyah</div>
+            
+            <div class="menu-group-label">Tools</div>
+            <div class="menu-item" onclick="toggleNotes()">Show Notes</div>
+            <div class="menu-item" onclick="giveHint()">Hint</div>
+            <div class="menu-item" onclick="analyzeBoardSolutions()">Check Logic</div>
+            <div class="menu-item" onclick="solveSudoku()">Solve Puzzle</div>
+            <div class="menu-item" onclick="scoreSudokuPuzzle()">Score Puzzle</div>
+            
+            <div class="menu-group-label">Clear</div>
+            <div class="menu-item" onclick="clearAnswers()" style="color: #cc0000;">Clear Answers</div>
+            <div class="menu-item" onclick="clearNotes()" style="color: #cc0000;">Clear Notes</div>
+            <div class="menu-item" onclick="resetFullBoard()" style="color: #cc0000;">Reset Grid</div>
+        </div>
     </div>
 </div>
+
+<div id="grid" class="sudoku-grid"></div>
 
 <div id="notesSection" class="notes-container">
     <div class="notes-header">NOTES (Pencil Marks)</div>
@@ -216,39 +224,25 @@
 
     function handleInput(e, r, c) {
         const input = e.target;
-
-        // Prevent editing original hint cells
         if (hintMask[r][c]) {
             input.value = currentBoard[r][c];
             alert("This cell is an original hint and cannot be changed.");
             return;
         }
-
         const val = parseInt(input.value);
-
-        // If input is invalid or cleared
         if (isNaN(val) || val < 1 || val > 9) {
             input.value = '';
             currentBoard[r][c] = 0;
-
             input.classList.remove('error', 'correct', 'empty-highlight', 'user-val');
-
-            // Recalculate notes if Notes are visible
             if (document.getElementById('notesSection').style.display === 'block') {
                 initializeAllNotes();
                 renderNotesGrid();
             }
-
             return;
         }
-
-        // Valid number entered
         currentBoard[r][c] = val;
-
         input.classList.remove('error', 'correct', 'empty-highlight');
         input.classList.add('user-val');
-
-        // Remove this number from row, column, and block notes
         updateNotesAfterPlacement(r, c, val);
     }
 
@@ -258,8 +252,6 @@
         t.style.display = 'block';
         setTimeout(() => { t.style.display = 'none'; }, 3000);
     }
-
-    /** Logic Core - Mirrored from Script **/
 
     function isValidPlacement(board, r, c, num) {
         for (let i = 0; i < 9; i++) {
@@ -317,7 +309,6 @@
         let puzzle = board.map(row => [...row]);
         let cluesFound = 81;
         let coords = Array.from({length: 81}, (_, i) => i).sort(() => Math.random() - 0.5);
-
         for (let i = 0; i < 81; i++) {
             if (cluesFound <= targetClues) break;
             let r = Math.floor(coords[i] / 9), c = coords[i] % 9;
@@ -328,8 +319,6 @@
         }
         return puzzle;
     }
-
-    /** UI Actions - Logic Matched to Script **/
 
     function createSudokuByDifficulty(clues, level) {
         toast(`Generating ${level} puzzle...`);
@@ -351,13 +340,11 @@
     function scoreSudokuPuzzle() {
         const inputs = document.querySelectorAll('.cell');
         let errors = 0, empty = 0;
-        
         for (let r = 0; r < 9; r++) {
             for (let c = 0; c < 9; c++) {
                 const val = currentBoard[r][c];
                 const input = inputs[r * 9 + c];
                 input.classList.remove('error', 'correct', 'empty-highlight');
-
                 if (val === 0) {
                     empty++;
                     input.classList.add('empty-highlight');
@@ -392,7 +379,6 @@
         if (!lastFocused) { alert("Please click on a cell first."); return; }
         const {r, c} = lastFocused;
         if (hintMask[r][c]) return;
-
         let solveCopy = JSON.parse(JSON.stringify(currentBoard));
         if (fillBoardRandomly(solveCopy)) {
             currentBoard[r][c] = solveCopy[r][c];
@@ -411,7 +397,6 @@
             const val = currentBoard[r][c];
             input.value = val === 0 ? '' : val;
             input.classList.remove('hint-cell', 'user-val', 'error', 'correct', 'empty-highlight', 'hint-provided');
-
             if (isNewPuzzle && val !== 0) hintMask[r][c] = true;
             if (hintMask[r][c]) input.classList.add('hint-cell');
             else if (val !== 0) input.classList.add('user-val');
@@ -447,10 +432,8 @@
     function toggleNotes() {
         const section = document.getElementById('notesSection');
         section.style.display = 'block';
-
         initializeAllNotes();
         renderNotesGrid();
-
         toast("Smart pencil marks generated.");
     }
 
@@ -458,10 +441,8 @@
         notesBoard = Array.from({ length: 9 }, () =>
             Array.from({ length: 9 }, () => Array(9).fill(false))
         );
-
         for (let r = 0; r < 9; r++) {
             for (let c = 0; c < 9; c++) {
-
                 if (currentBoard[r][c] === 0) {
                     for (let n = 1; n <= 9; n++) {
                         if (isValidPlacement(currentBoard, r, c, n)) {
@@ -476,44 +457,27 @@
     function renderNotesGrid() {
         const notesGrid = document.getElementById('notesGrid');
         notesGrid.innerHTML = '';
-
         for (let r = 0; r < 9; r++) {
             for (let subR = 0; subR < 3; subR++) {
                 for (let c = 0; c < 9; c++) {
                     for (let subC = 0; subC < 3; subC++) {
-
                         const noteVal = (subR * 3) + subC + 1;
                         const div = document.createElement('div');
                         div.className = 'note-cell';
-
-                        if (notesBoard[r][c][noteVal - 1]) {
-                            div.innerText = noteVal;
-                        }
-
-                        // Toggle manually
+                        if (notesBoard[r][c][noteVal - 1]) div.innerText = noteVal;
                         div.onclick = () => {
                             if (currentBoard[r][c] !== 0) return;
-
-                            notesBoard[r][c][noteVal - 1] =
-                                !notesBoard[r][c][noteVal - 1];
-
-                            div.innerText =
-                                notesBoard[r][c][noteVal - 1] ? noteVal : '';
+                            notesBoard[r][c][noteVal - 1] = !notesBoard[r][c][noteVal - 1];
+                            div.innerText = notesBoard[r][c][noteVal - 1] ? noteVal : '';
                         };
-
-                        // Border logic (unchanged)
                         if (subC === 2) {
                             div.style.borderRight = "1px solid #444";
-                            if ((c + 1) % 3 === 0)
-                                div.style.borderRight = "var(--border-thick)";
+                            if ((c + 1) % 3 === 0) div.style.borderRight = "var(--border-thick)";
                         }
-
                         if (subR === 2) {
                             div.style.borderBottom = "1px solid #444";
-                            if ((r + 1) % 3 === 0)
-                                div.style.borderBottom = "var(--border-thick)";
+                            if ((r + 1) % 3 === 0) div.style.borderBottom = "var(--border-thick)";
                         }
-
                         notesGrid.appendChild(div);
                     }
                 }
@@ -523,34 +487,17 @@
 
     function updateNotesAfterPlacement(r, c, val) {
         if (!val) return;
-
-        // Remove ALL notes from the cell itself
         notesBoard[r][c] = Array(9).fill(false);
-
-        // Remove the value from the same row
-        for (let col = 0; col < 9; col++) {
-            notesBoard[r][col][val - 1] = false;
-        }
-
-        // Remove the value from the same column
-        for (let row = 0; row < 9; row++) {
-            notesBoard[row][c][val - 1] = false;
-        }
-
-        // Remove the value from the same 3x3 block
+        for (let col = 0; col < 9; col++) notesBoard[r][col][val - 1] = false;
+        for (let row = 0; row < 9; row++) notesBoard[row][c][val - 1] = false;
         const startRow = Math.floor(r / 3) * 3;
         const startCol = Math.floor(c / 3) * 3;
-
         for (let row = startRow; row < startRow + 3; row++) {
             for (let col = startCol; col < startCol + 3; col++) {
                 notesBoard[row][col][val - 1] = false;
             }
         }
-
-        // Re-render notes if visible
-        if (document.getElementById('notesSection').style.display === 'block') {
-            renderNotesGrid();
-        }
+        if (document.getElementById('notesSection').style.display === 'block') renderNotesGrid();
     }
 
     initUI();
