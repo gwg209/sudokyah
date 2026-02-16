@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SUDOKYAH - Web Edition</title>
+    <style>
+        :root {
+            --bg-color: #f3f3f3;
+            --header-bg: #222222;
+            --notes-bg: #444444;
+            --cell-size: 50px;
+            --border-thick: 3px solid black;
+            --border-thin: 1px solid #999;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .header {
+            background: var(--header-bg);
+            color: white;
+            width: 450px;
+            padding: 10px 0;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+            border-radius: 4px 4px 0 0;
+        }
+
+        /* The 9x9 Grid */
+        .sudoku-grid {
+            display: grid;
+            grid-template-columns: repeat(9, var(--cell-size));
+            grid-template-rows: repeat(9, var(--cell-size));
+            border: var(--border-thick);
+            background-color: white;
+        }
+
+        .cell {
+            width: var(--cell-size);
+            height: var(--cell-size);
+            box-sizing: border-box;
+            border: var(--border-thin);
+            text-align: center;
+            font-size: 1.2rem;
+            outline: none;
+        }
+
+        /* Thick borders for 3x3 regions */
+        .cell:nth-child(3n) { border-right: var(--border-thick); }
+        .cell:nth-child(9n) { border-right: var(--border-thick); }
+        .cell:nth-child(n+19):nth-child(-n+27),
+        .cell:nth-child(n+46):nth-child(-n+54) { border-bottom: var(--border-thick); }
+
+        .cell.hint { font-weight: bold; color: black; background-color: #eee; }
+        .cell.user-val { color: #1155cc; }
+        .cell.error { background-color: #ff9999; }
+        .cell.correct { background-color: #99ff99; }
+        .cell.empty-highlight { background-color: #ffff99; }
+
+        /* Menu / Controls */
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            max-width: 600px;
+        }
+
+        button {
+            padding: 8px 12px;
+            cursor: pointer;
+            border: 1px solid #444;
+            background: white;
+            transition: 0.2s;
+        }
+
+        button:hover { background: #ddd; }
+
+        .notes-container {
+            margin-top: 30px;
+            display: none; /* Hidden until "Notes" clicked */
+        }
+
+        .notes-header {
+            background: var(--notes-bg);
+            color: white;
+            text-align: center;
+            padding: 5px;
+            font-weight: bold;
+        }
+
+        .notes-grid {
+            display: grid;
+            grid-template-columns: repeat(27, 15px);
+            grid-template-rows: repeat(27, 15px);
+            border: var(--border-thick);
+            background: #fafafa;
+            font-size: 8px;
+            color: #666;
+        }
+
+        .note-cell {
+            border: 0.1px dotted #ccc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">SUDOKYAH</div>
+<div id="grid" class="sudoku-grid"></div>
+
+<div class="controls">
+    <button onclick="generateBoard(45, 'Beginner')">Beginner</button>
+    <button onclick="generateBoard(36, 'Medium')">Medium</button>
+    <button onclick="generateBoard(27, 'Advanced')">Advanced</button>
+    <button onclick="generateBoard(22, 'Expert')">Expert</button>
+    <button onclick="generateBoard(19, 'Kyah Level')">Kyah Level</button>
+    <button onclick="scoreBoard()">Score</button>
+    <button onclick="solveBoard()">Solve</button>
+    <button onclick="toggleNotes()">Toggle Notes</button>
+    <button onclick="clearBoard()">Clear Board</button>
+</div>
+
+<div id="notesSection" class="notes-container">
+    <div class="notes-header">NOTES (Pencil Marks)</div>
+    <div id="notesGrid" class="notes-grid"></div>
+</div>
+
+<script>
+    let currentBoard = Array.from({ length: 9 }, () => Array(9).fill(0));
+    let hintMask = Array.from({ length: 9 }, () => Array(9).fill(false));
+
+    // Initialize Grid
+    const gridEl = document.getElementById('grid');
+    function initUI() {
+        gridEl.innerHTML = '';
+        for (let r = 0; r < 9; r++) {
+            for (let c = 0; c < 9; c++) {
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.maxLength = 1;
+                input.className = 'cell';
+                input.dataset.row = r;
+                input.dataset.col = c;
+                input.oninput = (e) => handleInput(e, r, c);
+                gridEl.appendChild(input);
+            }
+        }
+    }
+
+    function handleInput(e, r, c) {
+        const val = parseInt(e.target.value);
+        if (hintMask[r][c]) {
+            e.target.value = currentBoard[r][c] || '';
+            alert("This cell is an original hint and cannot be changed.");
+            return;
+        }
+        if (isNaN(val) || val < 1 || val > 9) {
+            e.target.value = '';
+            currentBoard[r][c] = 0;
+        } else {
+            currentBoard[r][c] = val;
+            e.target.classList.add('user-val');
+        }
+    }
+
+    /** LOGIC ENGINES (Ported from your GAS) **/
+
+    function isValid(board, r, c, num) {
+        for (let i = 0; i < 9; i++) {
+            if (board[r][i] === num || board[i][c] === num) return false;
+            const sRow = Math.floor(r / 3) * 3, sCol = Math.floor(c / 3) * 3;
+            if (board[sRow + Math.floor(i / 3)][sCol + (i % 3)] === num) return false;
+        }
+        return true;
+    }
+
+    function fillRandomly(board) {
+        for (let r = 0; r < 9; r++) {
+            for (let c = 0; c < 9; c++) {
+                if (board[r][c] === 0) {
+                    let nums = [1, 2, 3, 4, 5, 6, 7, 8, 9].sort(() => Math.random() - 0.5);
+                    for (let n of nums) {
+                        if (isValid(board, r, c, n)) {
+                            board[r][c] = n;
+                            if (fillRandomly(board)) return true;
+                            board[r][c] = 0;
+                        }
+                    }
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    function countSolutions(board) {
+        let solutions = 0;
+        function solveInternal(b) {
+            for (let r = 0; r < 9; r++) {
+                for (let c = 0; c < 9; c++) {
+                    if (b[r][c] === 0) {
+                        for (let n = 1; n <= 9; n++) {
+                            if (isValid(b, r, c, n)) {
+                                b[r][c] = n;
+                                solveInternal(b);
+                                b[r][c] = 0;
+                                if (solutions > 1) return;
+                            }
+                        }
+                        return;
+                    }
+                }
+            }
+            solutions++;
+        }
+        solveInternal(JSON.parse(JSON.stringify(board)));
+        return solutions;
+    }
+
+    /** MENU FUNCTIONS **/
+
+    function generateBoard(clues, level) {
+        clearBoard();
+        let board = Array.from({ length: 9 }, () => Array(9).fill(0));
+        fillRandomly(board);
+        
+        let puzzle = JSON.parse(JSON.stringify(board));
+        let cluesFound = 81;
+        let coords = Array.from({length: 81}, (_, i) => i).sort(() => Math.random() - 0.5);
+
+        for (let i = 0; i < 81; i++) {
+            if (cluesFound <= clues) break;
+            let r = Math.floor(coords[i] / 9), c = coords[i] % 9;
+            let backup = puzzle[r][c];
+            puzzle[r][c] = 0;
+            if (countSolutions(puzzle) !== 1) puzzle[r][c] = backup;
+            else cluesFound--;
+        }
+
+        currentBoard = puzzle;
+        updateUI(true);
+        console.log(`${level} generated with ${cluesFound} clues.`);
+    }
+
+    function updateUI(isNewPuzzle = false) {
+        const inputs = document.querySelectorAll('.cell');
+        inputs.forEach(input => {
+            const r = input.dataset.row;
+            const c = input.dataset.col;
+            const val = currentBoard[r][c];
+            input.value = val === 0 ? '' : val;
+            input.classList.remove('hint', 'user-val', 'error', 'correct', 'empty-highlight');
+
+            if (isNewPuzzle && val !== 0) {
+                hintMask[r][c] = true;
+                input.classList.add('hint');
+            } else if (hintMask[r][c]) {
+                input.classList.add('hint');
+            } else if (val !== 0) {
+                input.classList.add('user-val');
+            }
+        });
+    }
+
+    function scoreBoard() {
+        const inputs = document.querySelectorAll('.cell');
+        let errors = 0, empty = 0;
+
+        for (let r = 0; r < 9; r++) {
+            for (let c = 0; c < 9; c++) {
+                const val = currentBoard[r][c];
+                const input = inputs[r * 9 + c];
+                input.classList.remove('error', 'correct', 'empty-highlight');
+
+                if (val === 0) {
+                    empty++;
+                    input.classList.add('empty-highlight');
+                } else {
+                    currentBoard[r][c] = 0;
+                    if (isValid(currentBoard, r, c, val)) {
+                        input.classList.add('correct');
+                    } else {
+                        errors++;
+                        input.classList.add('error');
+                    }
+                    currentBoard[r][c] = val;
+                }
+            }
+        }
+        const score = (((81 - empty - errors) / 81) * 100).toFixed(1);
+        alert(`Errors: ${errors}\nEmpty: ${empty}\nScore: ${score}%`);
+    }
+
+    function solveBoard() {
+        if (fillRandomly(currentBoard)) {
+            updateUI();
+        } else {
+            alert("No solution possible.");
+        }
+    }
+
+    function clearBoard() {
+        currentBoard = Array.from({ length: 9 }, () => Array(9).fill(0));
+        hintMask = Array.from({ length: 9 }, () => Array(9).fill(false));
+        updateUI();
+        document.getElementById('notesGrid').innerHTML = '';
+    }
+
+    function toggleNotes() {
+        const section = document.getElementById('notesSection');
+        if (section.style.display === 'block') {
+            section.style.display = 'none';
+        } else {
+            section.style.display = 'block';
+            generateNotesUI();
+        }
+    }
+
+    function generateNotesUI() {
+        const notesGrid = document.getElementById('notesGrid');
+        notesGrid.innerHTML = '';
+        for (let r = 0; r < 9; r++) {
+            for (let c = 0; c < 9; c++) {
+                // For each logical cell, create a 3x3 mini-grid area
+                for (let subR = 0; subR < 3; subR++) {
+                    for (let subC = 0; subC < 3; subC++) {
+                        const noteVal = (subR * 3) + subC + 1;
+                        const div = document.createElement('div');
+                        div.className = 'note-cell';
+                        if (currentBoard[r][c] === 0 && isValid(currentBoard, r, c, noteVal)) {
+                            div.innerText = noteVal;
+                        }
+                        notesGrid.appendChild(div);
+                    }
+                }
+            }
+        }
+    }
+
+    initUI();
+</script>
+
+</body>
+</html>
