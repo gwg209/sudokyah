@@ -153,7 +153,7 @@
 </head>
 <body>
 
-<div class="header">SUDOKYAH v15.28</div>
+<div class="header">SUDOKYAH v15.29</div>
 <div id="grid" class="sudoku-grid"></div>
 
 <div class="controls">
@@ -215,21 +215,41 @@
     }
 
     function handleInput(e, r, c) {
+        const input = e.target;
+
+        // Prevent editing original hint cells
         if (hintMask[r][c]) {
-            e.target.value = currentBoard[r][c];
+            input.value = currentBoard[r][c];
             alert("This cell is an original hint and cannot be changed.");
             return;
         }
-        const val = parseInt(e.target.value);
+
+        const val = parseInt(input.value);
+
+        // If input is invalid or cleared
         if (isNaN(val) || val < 1 || val > 9) {
-            e.target.value = '';
+            input.value = '';
             currentBoard[r][c] = 0;
-        } else {
-            currentBoard[r][c] = val;
-            updateNotesAfterPlacement(r, c, val);
-            e.target.classList.remove('error', 'correct', 'empty-highlight');
-            e.target.classList.add('user-val');
+
+            input.classList.remove('error', 'correct', 'empty-highlight', 'user-val');
+
+            // Recalculate notes if Notes are visible
+            if (document.getElementById('notesSection').style.display === 'block') {
+                initializeAllNotes();
+                renderNotesGrid();
+            }
+
+            return;
         }
+
+        // Valid number entered
+        currentBoard[r][c] = val;
+
+        input.classList.remove('error', 'correct', 'empty-highlight');
+        input.classList.add('user-val');
+
+        // Remove this number from row, column, and block notes
+        updateNotesAfterPlacement(r, c, val);
     }
 
     function toast(msg) {
@@ -498,6 +518,38 @@
                     }
                 }
             }
+        }
+    }
+
+    function updateNotesAfterPlacement(r, c, val) {
+        if (!val) return;
+
+        // Remove ALL notes from the cell itself
+        notesBoard[r][c] = Array(9).fill(false);
+
+        // Remove the value from the same row
+        for (let col = 0; col < 9; col++) {
+            notesBoard[r][col][val - 1] = false;
+        }
+
+        // Remove the value from the same column
+        for (let row = 0; row < 9; row++) {
+            notesBoard[row][c][val - 1] = false;
+        }
+
+        // Remove the value from the same 3x3 block
+        const startRow = Math.floor(r / 3) * 3;
+        const startCol = Math.floor(c / 3) * 3;
+
+        for (let row = startRow; row < startRow + 3; row++) {
+            for (let col = startCol; col < startCol + 3; col++) {
+                notesBoard[row][col][val - 1] = false;
+            }
+        }
+
+        // Re-render notes if visible
+        if (document.getElementById('notesSection').style.display === 'block') {
+            renderNotesGrid();
         }
     }
 
