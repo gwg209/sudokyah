@@ -12,7 +12,7 @@
             --bg-color: #f3f3f3;
             --header-bg: #222222;
             --notes-bg: #444444;
-            --cell-size: 45px;
+            --cell-size: 40px;
             --border-thick: 3px solid black;
             --border-thin: 1px solid #999;
         }
@@ -29,7 +29,7 @@
         .header {
             background: var(--header-bg);
             color: white;
-            width: 420px;
+            width: 400px;
             padding: 10px 0;
             text-align: center;
             font-weight: bold;
@@ -73,13 +73,13 @@
             margin-top: 20px;
             display: flex;
             flex-wrap: wrap;
-            gap: 6px;
+            gap: 7px;
             justify-content: center;
-            max-width: 430px;
+            max-width: 400px;
         }
 
         button {
-            padding: 8px 12px;
+            padding: 8px 10px;
             cursor: pointer;
             border: 1px solid #444;
             background: white;
@@ -126,7 +126,7 @@
 </head>
 <body>
 
-<div class="header">SUDOKYAH v15.4</div>
+<div class="header">SUDOKYAH v15.5</div>
 <div id="grid" class="sudoku-grid"></div>
 
 <div class="controls">
@@ -134,7 +134,7 @@
     <button onclick="createSudokuByDifficulty(36, 'Medium')">Medium</button>
     <button onclick="createSudokuByDifficulty(27, 'Advanced')">Advanced</button>
     <button onclick="createSudokuByDifficulty(22, 'Expert')">Expert</button>
-    <button onclick="createSudokuByDifficulty(19, 'Kyah Lvl')">Kyah Level</button> 
+    <button onclick="createSudokuByDifficulty(19, 'Kyah Level')">Kyah Lvl</button> 
 
     <button onclick="giveHint()">Hint</button>
     <button onclick="analyzeBoardSolutions()">Check</button>
